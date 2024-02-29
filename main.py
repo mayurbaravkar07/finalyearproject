@@ -4,7 +4,9 @@ from flask import Flask, render_template, request
 from keras.preprocessing.image import load_img, img_to_array
 from keras.applications.vgg16 import preprocess_input
 from keras.models import load_model
+import numpy as np
 
+threshold=0.10
 app = Flask(__name__)
 model = load_model('models/model1.h5')
  # Load your custom trained CVD risk prediction model
@@ -27,7 +29,21 @@ def predict():
     # Assuming your model returns probabilities for "Potential risk of the CVD" and "No Signs of the CVD"
     prediction = model.predict(image)
     
-    if prediction[0][0] > prediction[0][1]:
+        
+    # Given prediction array
+    prediction_array = np.array(prediction)
+
+    # Calculate the average of the prediction array
+    average = np.mean(prediction_array)
+
+    # Normalize each element by dividing by the average
+    normalized_array = prediction_array / average
+
+    # Scale the normalized array to the range 0 to 1
+    normalized_array = (normalized_array - np.min(normalized_array)) / (np.max(normalized_array) - np.min(normalized_array))
+    result=np.mean(normalized_array)
+    print(result)
+    if result>threshold:
         result = "Potential risk of the CVD"
     else:
         result = "No Signs of the CVD"
